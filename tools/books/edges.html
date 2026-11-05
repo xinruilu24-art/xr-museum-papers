@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<!--BASE-->
+<title>Page edges</title>
+<link rel="stylesheet" href="book.css">
+<style>
+  /* Rows 0-236: page edges. u runs along the edge, v across the stack
+     (v = 0 at the back board, 236/256 at the front board).
+     Rows 240-256: headband stripes (u along the headband). */
+  #art { background: #fdf6e6; }
+  #content { position: absolute; inset: 0; }
+  .pagearea { position: absolute; left: 0; top: 0; width: 512px; height: 236px; overflow: hidden; }
+  .lines-a { mix-blend-mode: multiply; opacity: 0.07; }
+  .lines-b {
+    background:
+      repeating-linear-gradient(180deg, rgba(92, 72, 48, 0.0525) 0 1px, rgba(0, 0, 0, 0) 1px 2.3px),
+      repeating-linear-gradient(180deg, rgba(92, 72, 48, 0.035) 0 1px, rgba(0, 0, 0, 0) 1px 3.7px);
+  }
+  .speck { mix-blend-mode: multiply; opacity: 0.03; }
+  .age { mix-blend-mode: multiply; opacity: 0.035; }
+  /* warm ivory toning of old paper */
+  .tone { position: absolute; inset: 0; background: #e9d9b8; mix-blend-mode: multiply; opacity: 0.1; }
+  .shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(70, 52, 34, 0.16) 0%, rgba(70, 52, 34, 0.05) 5%, rgba(70, 52, 34, 0) 11%,
+      rgba(70, 52, 34, 0) 89%, rgba(70, 52, 34, 0.05) 95%, rgba(70, 52, 34, 0.16) 100%);
+  }
+  .band {
+    position: absolute;
+    left: 0;
+    top: 240px;
+    width: 512px;
+    height: 16px;
+    background: repeating-linear-gradient(100deg, var(--band) 0 8px, var(--foil) 8px 16px);
+  }
+  .band::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.32));
+  }
+</style>
+</head>
+<body>
+<div id="tex"><div id="art">
+  <div id="content"><div class="pagearea" id="pages"></div><div class="band"></div></div>
+</div></div>
+<!--BOOK-->
+<script src="book.js"></script>
+<script>
+document.documentElement.style.setProperty('--band', window.BOOK.band || window.BOOK.cloth);
+Book.start(({ noiseLayer }) => {
+  const pages = document.getElementById('pages');
+  pages.appendChild(noiseLayer('lines-a', 0.0035, 0.40, 3, 5));
+  const b = document.createElement('div'); b.className = 'layer lines-b'; pages.appendChild(b);
+  const t = document.createElement('div'); t.className = 'tone'; pages.appendChild(t);
+  pages.appendChild(noiseLayer('age', 0.004, 0.02, 3, 9));
+  pages.appendChild(noiseLayer('speck', 0.6, 0.6, 1, 13));
+  const s = document.createElement('div'); s.className = 'shade'; pages.appendChild(s);
+  return { fit: 'ok' };
+});
+</script>
+</body>
+</html>

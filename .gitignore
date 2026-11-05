@@ -1,0 +1,23 @@
+# Local QA only
+tests/
+
+# Tool previews and leftovers
+previews/
+*.OVERFLOW.png
+.rendering-*
+*.tmp
+*.log
+__pycache__/
+node_modules/
+
+# Blender sources (large, local editing only)
+*.blend
+*.blend1
+
+# Local agent settings
+.claude/
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store

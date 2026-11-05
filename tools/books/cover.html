@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<!--BASE-->
+<title>Book front cover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..800&display=block">
+<link rel="stylesheet" href="book.css">
+<style>
+  #content { position: absolute; inset: 0; }
+  .frame { position: absolute; box-sizing: border-box; border-style: solid; border-color: var(--accent); filter: url(#deboss-fine); }
+  .frame.outer { border-width: calc(var(--mm) * 0.6); }
+  .frame.inner { border-width: calc(var(--mm) * 0.24); }
+  .corner {
+    position: absolute;
+    width: calc(var(--mm) * 1.7);
+    height: calc(var(--mm) * 1.7);
+    background: var(--accent);
+    transform: translate(-50%, -50%) rotate(45deg);
+    filter: url(#deboss-fine);
+  }
+
+  .theme {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--mm) * 2.2);
+    transform: translateX(-50%);
+    font-weight: 600;
+    font-size: calc(var(--mm) * 5.8);
+    letter-spacing: 0.2em;
+    font-variation-settings: 'opsz' 14;
+  }
+  .theme .t { padding-left: 0.2em; }
+  .theme .r { width: calc(var(--mm) * 5); height: calc(var(--mm) * 0.4); background: var(--accent); filter: url(#deboss-fine); }
+
+  .title {
+    position: absolute;
+    margin: 0;
+    font-weight: 650;
+    line-height: 1.04;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+    font-variation-settings: 'opsz' 40;
+  }
+  .title.auto { white-space: normal; text-wrap: balance; overflow-wrap: normal; hyphens: manual; }
+  .title .hang { margin-right: -0.42em; }
+  .measure { visibility: hidden; }
+
+  .orn { position: absolute; display: flex; align-items: center; gap: calc(var(--mm) * 2.4); transform: translateX(-50%); }
+  .orn .r { width: calc(var(--mm) * 13); height: calc(var(--mm) * 0.36); background: var(--accent); filter: url(#deboss-fine); }
+  .orn .d { width: calc(var(--mm) * 2); height: calc(var(--mm) * 2); background: var(--accent); transform: rotate(45deg); filter: url(#deboss-fine); }
+
+  .authors {
+    position: absolute;
+    transform: translateX(-50%);
+    font-weight: 600;
+    font-size: calc(var(--mm) * 7.5);
+    letter-spacing: 0.12em;
+    padding-left: 0.12em;
+    font-variation-settings: 'opsz' 14;
+  }
+  .year {
+    position: absolute;
+    transform: translateX(-50%);
+    font-weight: 600;
+    font-size: calc(var(--mm) * 6);
+    letter-spacing: 0.24em;
+    padding-left: 0.24em;
+    font-variation-settings: 'opsz' 14;
+  }
+</style>
+</head>
+<body>
+<div id="tex"><div id="art">
+  <div class="hinge left"></div>
+  <div id="content"></div>
+</div></div>
+<!--BOOK-->
+<script src="book.js"></script>
+<script>
+Book.start(({ mm, W, H, fit, lineCount, setLines, B }) => {
+  const content = document.getElementById('content');
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    content.appendChild(e);
+    return e;
+  };
+  const px = (v) => v + 'px';
+
+  // Board proper starts after the joint groove.
+  const hinge = 6.5 * mm;
+  const boardL = hinge;
+  const boardW = W - hinge;
+  const cx = boardL + boardW / 2;
+
+  // Double rule frame, thick outside, thin inside.
+  const inset = 7.5 * mm;
+  const gap = 1.5 * mm;
+  const fo = el('div', 'frame outer');
+  Object.assign(fo.style, { left: px(boardL + inset), top: px(inset), width: px(boardW - 2 * inset), height: px(H - 2 * inset) });
+  const fi = el('div', 'frame inner');
+  const i2 = inset + 0.6 * mm + gap;
+  Object.assign(fi.style, { left: px(boardL + i2), top: px(i2), width: px(boardW - 2 * i2), height: px(H - 2 * i2) });
+  for (const [x, y] of [[boardL + inset, inset], [W - inset, inset], [boardL + inset, H - inset], [W - inset, H - inset]]) {
+    const c = el('div', 'corner');
+    Object.assign(c.style, { left: px(x + (x < cx ? 0.3 : -0.3) * mm), top: px(y + (y < H / 2 ? 0.3 : -0.3) * mm) });
+  }
+
+  // Theme name between two short rules.
+  const theme = el('div', 'theme caps accent-ink');
+  theme.innerHTML = '<span class="r"></span><span class="t"></span><span class="r"></span>';
+  theme.querySelector('.t').textContent = B.themeName;
+  Object.assign(theme.style, { left: px(cx), top: px(28 * mm) });
+
+  // Title: one size for the whole series so the six covers match. Each
+  // paper has a few line-break alternatives; the series size is the
+  // largest size at which every paper has one that fits.
+  const boxW = (wMm) => (wMm - 6.5) * mm * 0.8;
+  const maxH = 90 * mm;
+  const opts = { maxH, maxLines: 4, min: 4 * mm, max: 21 * mm };
+  const place = (e, alt, title) => {
+    if (alt) { e.classList.remove('auto'); setLines(e, alt); } else { e.classList.add('auto'); e.textContent = title; }
+  };
+  const fitAlt = (alt, title, wMm) => {
+    const m = el('h1', 'title measure');
+    m.style.width = px(boxW(wMm));
+    place(m, alt, title);
+    const r = fit(m, { ...opts, maxW: boxW(wMm) });
+    m.remove();
+    return r.ok ? r.px : 0;
+  };
+  const altsOf = (s) => (s.lines && s.lines.length ? s.lines : [null]);
+  const best = B.series.map((s) => Math.max(...altsOf(s).map((a) => fitAlt(a, s.title, s.coverW))));
+  const titlePx = Math.min(...best);
+  const mine = altsOf(B).find((a) => fitAlt(a, B.title, B.coverW) >= titlePx - 0.01) || altsOf(B)[0];
+  const title = el('h1', 'title foil');
+  title.style.width = px(boxW(B.coverW));
+  place(title, mine, B.title);
+  title.style.fontSize = px(titlePx);
+  const lines = lineCount(title);
+  const tH = title.scrollHeight;
+  const titleCenter = 110 * mm;
+  const titleTop = titleCenter - tH / 2;
+  Object.assign(title.style, { left: px(cx - boxW(B.coverW) / 2), top: px(titleTop) });
+  const overflow = title.scrollWidth > Math.ceil(boxW(B.coverW)) + 0.5 || titlePx <= opts.min;
+
+  // Small ornament under the title.
+  const orn = el('div', 'orn');
+  orn.innerHTML = '<span class="r"></span><span class="d"></span><span class="r"></span>';
+  Object.assign(orn.style, { left: px(cx), top: px(titleTop + tH + 7 * mm) });
+
+  const authors = el('div', 'authors caps foil', B.authors);
+  Object.assign(authors.style, { left: px(cx), top: px(214 * mm) });
+  const year = el('div', 'year caps foil', B.year);
+  Object.assign(year.style, { left: px(cx), top: px(227 * mm) });
+
+  const innerW = boardW - 2 * (i2 + 3 * mm);
+  const authorsOver = authors.scrollWidth > innerW || theme.scrollWidth > innerW;
+  return {
+    titlePx: (titlePx / mm).toFixed(2) + 'mm',
+    titleLines: String(lines),
+    fit: overflow || authorsOver ? 'overflow' : 'ok',
+    seriesPx: best.map((v) => (v / mm).toFixed(2)).join(','),
+  };
+});
+</script>
+</body>
+</html>

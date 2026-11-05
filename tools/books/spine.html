@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<!--BASE-->
+<title>Book spine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..800&display=block">
+<link rel="stylesheet" href="book.css">
+<style>
+  #content { position: absolute; inset: 0; }
+  /* Image left = back board side, right = front board side, top = head.
+     Each title line is set horizontally and turned 90 degrees clockwise,
+     so it reads top to bottom with letter tops toward the front cover
+     (vertical writing modes misplace the curly quotes). */
+  .stitle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+    white-space: nowrap;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    transform-origin: 0 0;
+  }
+  .syear {
+    position: absolute;
+    transform: translateX(-50%);
+    font-weight: 650;
+    letter-spacing: 0.1em;
+    padding-left: 0.1em;
+    font-variation-settings: 'opsz' 14;
+  }
+  .d { position: absolute; background: var(--accent); transform: translate(-50%, -50%) rotate(45deg); filter: url(#deboss-fine); }
+</style>
+</head>
+<body>
+<div id="tex"><div id="art">
+  <div id="content"></div>
+</div></div>
+<!--BOOK-->
+<script src="book.js"></script>
+<script>
+Book.start(({ mm, W, H, B }) => {
+  const content = document.getElementById('content');
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    content.appendChild(e);
+    return e;
+  };
+  const px = (v) => v + 'px';
+  const cx = W / 2;
+  const TRACK = 0.07;
+
+  // Pairs of rules near head and tail, the full width of the spine.
+  const band = (y) => {
+    const a = el('div', 'rule');
+    Object.assign(a.style, { left: '0px', width: px(W), top: px(y), height: px(0.6 * mm) });
+    const b = el('div', 'rule');
+    Object.assign(b.style, { left: '0px', width: px(W), top: px(y + 1.9 * mm), height: px(0.25 * mm) });
+  };
+  band(13 * mm);
+  band(H - 13 * mm - 2.15 * mm);
+  // mirror the pair at the tail so the thin rule sits inside
+  const rules = content.querySelectorAll('.rule');
+  rules[2].style.height = px(0.25 * mm);
+  rules[3].style.height = px(0.6 * mm);
+
+  // Title along the spine, top-aligned 26 mm below the head on every book
+  // so a row of spines shares one title line. Cap height of DM Sans is
+  // 0.7 em.
+  const top = 26 * mm;
+  const bottom = H - 49 * mm;
+  const maxLen = bottom - top;
+  // thin spines keep their 6.6 mm cap; thick ones grow to 30% of the width
+  const capLimit = Math.min(11 * mm, Math.max(W * 0.3, Math.min(W * 0.42, 6.6 * mm)));
+  const probe = el('h1', 'stitle foil');
+  probe.style.visibility = 'hidden';
+  // visible length leaves out the tracking after the last letter
+  const lengthAt = (text, cap) => {
+    probe.textContent = text;
+    probe.style.fontSize = px(cap / 0.7);
+    return probe.offsetWidth - TRACK * cap / 0.7;
+  };
+  const fitCap = (lines, limit) => {
+    let lo = 1.4 * mm, hi = limit;
+    const fits = (c) => lines.every((l) => lengthAt(l, c) <= maxLen);
+    if (!fits(lo)) return lo;
+    if (fits(hi)) return hi;
+    for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (fits(m)) lo = m; else hi = m; }
+    return lo;
+  };
+  const splitTwo = (t) => {
+    const words = t.split(' ');
+    let bestI = 1, bestD = Infinity;
+    for (let i = 1; i < words.length; i++) {
+      const d = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length);
+      if (d < bestD) { bestD = d; bestI = i; }
+    }
+    return [words.slice(0, bestI).join(' '), words.slice(bestI).join(' ')];
+  };
+  const PITCH = 1.45;                       // line pitch across the spine, in caps
+  let lines = [B.title];
+  let cap = fitCap(lines, capLimit);
+  if (W >= 35 * mm && cap < 8.5 * mm && B.title.includes(' ')) {
+    const two = B.spineLines || splitTwo(B.title);
+    const cap2 = fitCap(two, Math.min(capLimit, (W * 0.62) / (1 + PITCH)));
+    if (cap2 > cap * 1.1) { lines = two; cap = cap2; }
+  }
+  probe.remove();
+  // line 1 sits toward the front cover (the right of the image), so it is
+  // read first when the head is tilted to read the spine
+  const n = lines.length;
+  lines.forEach((text, i) => {
+    const t = el('h1', 'stitle foil', text);
+    t.style.fontSize = px(cap / 0.7);
+    const lineH = t.offsetHeight;
+    const xc = cx + ((n - 1) / 2 - i) * PITCH * cap;
+    // With line-height 1 the capitals sit almost exactly in the middle of
+    // the line box, so centring the box centres the lettering.
+    t.style.transform = `translate(${xc + lineH / 2}px, ${top}px) rotate(90deg)`;
+  });
+  const len = Math.max(...lines.map((l) => {
+    const t = el('h1', 'stitle', l); t.style.visibility = 'hidden'; t.style.fontSize = px(cap / 0.7);
+    const v = t.offsetWidth - TRACK * cap / 0.7; t.remove(); return v;
+  }));
+
+  // Diamond and year near the tail.
+  const d = el('div', 'd');
+  const ds = Math.min(1.8 * mm, W * 0.09);
+  Object.assign(d.style, { width: px(ds), height: px(ds), left: px(cx), top: px(H - 40 * mm) });
+  const y = el('div', 'syear caps foil', B.year);
+  const ySize = Math.min(5.5 * mm, (W * 0.62) / 2.75);
+  Object.assign(y.style, { fontSize: px(ySize), left: px(cx), top: px(H - 34.5 * mm) });
+
+  return {
+    titlePx: (cap / 0.7 / mm).toFixed(2) + 'mm',
+    capMm: (cap / mm).toFixed(2),
+    titleLines: String(n),
+    fit: len <= maxLen + 0.5 && y.offsetWidth <= W * 0.9 ? 'ok' : 'overflow',
+  };
+});
+</script>
+</body>
+</html>

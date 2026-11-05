@@ -1,0 +1,135 @@
+/* Shared look for the book textures: cloth, foil stamping, rules.
+   Every page is laid out on a "design" canvas in physical proportions
+   (--mm px per millimetre), then scaled to the texture size. Sizes are fixed
+   px because headless Chrome's layout viewport can be smaller than the
+   window. */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--cloth, #333);
+}
+body {
+  width: var(--tex-w);
+  height: var(--tex-h);
+  font-family: 'DM Sans', 'Segoe UI', Arial, sans-serif;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+#tex {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--tex-w);
+  height: var(--tex-h);
+  overflow: hidden;
+}
+#art {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--design-w);
+  height: var(--design-h);
+  transform-origin: 0 0;
+  transform: scale(var(--sx), var(--sy));
+  will-change: transform;   /* grayscale antialiasing, no colour fringes */
+  overflow: hidden;
+  background: var(--cloth);
+}
+
+/* ---------- cloth ---------- */
+
+.layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--design-w);
+  height: var(--design-h);
+  pointer-events: none;
+}
+svg.layer { display: block; }
+/* overlay is linear in the layer for dark cloth, so grey noise centred on
+   50% modulates brightness without shifting the cloth colour */
+.mottle { mix-blend-mode: overlay; opacity: 0.05; }
+.threads-h { mix-blend-mode: overlay; opacity: 0.2; }
+.threads-v { mix-blend-mode: overlay; opacity: 0.15; }
+.grain { mix-blend-mode: overlay; opacity: 0.12; }
+
+/* a soft falloff toward the board edges; the rubbed, lighter edges are
+   the .rub layer from book.js */
+.wear {
+  box-shadow: inset 0 0 calc(var(--mm) * 6) rgba(0, 0, 0, 0.09);
+}
+
+/* the joint groove between spine and board */
+.hinge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--mm) * 7.5);
+}
+.hinge.left {
+  left: 0;
+  background: linear-gradient(90deg,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.30) 34%,
+    rgba(0, 0, 0, 0.16) 66%,
+    rgba(255, 255, 255, 0.07) 80%,
+    rgba(255, 255, 255, 0.00) 100%);
+}
+.hinge.right {
+  right: 0;
+  background: linear-gradient(270deg,
+    rgba(0, 0, 0, 0.10) 0%,
+    rgba(0, 0, 0, 0.30) 34%,
+    rgba(0, 0, 0, 0.16) 66%,
+    rgba(255, 255, 255, 0.07) 80%,
+    rgba(255, 255, 255, 0.00) 100%);
+}
+
+/* ---------- stamping ----------
+   Debossed: the filters (book.js) darken the upper inner edge of each shape
+   and add a faint light rim below it, as on foil pressed into cloth. */
+
+.foil {
+  color: var(--foil);
+  background: linear-gradient(180deg, #f8f2e4 0%, var(--foil) 45%, #e4d6ba 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: url(#deboss);
+}
+.accent-ink {
+  color: var(--accent);
+  filter: url(#deboss);
+}
+.rule {
+  position: absolute;
+  background: var(--accent);
+  filter: url(#deboss-fine);
+}
+.foil-rule {
+  position: absolute;
+  background: linear-gradient(180deg, #f8f2e4, var(--foil) 50%, #e4d6ba);
+  filter: url(#deboss-fine);
+}
+
+/* blind stamping: pressed into the cloth without foil */
+.blind {
+  position: absolute;
+  box-sizing: border-box;
+  border: calc(var(--mm) * 0.45) solid rgba(0, 0, 0, 0.26);
+  box-shadow:
+    0 calc(var(--mm) * 0.25) 0 rgba(255, 255, 255, 0.07),
+    inset 0 calc(var(--mm) * 0.25) 0 rgba(255, 255, 255, 0.05);
+}
+
+.caps {
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}

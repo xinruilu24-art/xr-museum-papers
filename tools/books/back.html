@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<!--BASE-->
+<title>Book back cover</title>
+<link rel="stylesheet" href="book.css">
+<style>
+  #content { position: absolute; inset: 0; }
+  .seal {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+  /* blind-stamped diamond: pressed cloth, a shade darker, no foil */
+  .seal-d {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%) rotate(45deg);
+    box-shadow:
+      inset 0 calc(var(--mm) * 0.35) calc(var(--mm) * 0.2) rgba(0, 0, 0, 0.25),
+      0 calc(var(--mm) * 0.25) 0 rgba(255, 255, 255, 0.07);
+  }
+</style>
+</head>
+<body>
+<div id="tex"><div id="art">
+  <div class="hinge right"></div>
+  <div id="content"></div>
+</div></div>
+<!--BOOK-->
+<script src="book.js"></script>
+<script>
+Book.start(({ mm, W, H }) => {
+  const content = document.getElementById('content');
+  const el = (cls) => { const e = document.createElement('div'); e.className = cls; content.appendChild(e); return e; };
+  const px = (v) => v + 'px';
+  // Seen from behind, the spine is on the right.
+  const hinge = 6.5 * mm;
+  const boardW = W - hinge;
+  const cx = boardW / 2;
+  const inset = 7.5 * mm;
+  const f = el('blind');
+  Object.assign(f.style, { left: px(inset), top: px(inset), width: px(boardW - 2 * inset), height: px(H - 2 * inset) });
+  // a blind-stamped mark about 30 mm above the tail
+  const s = el('seal blind');
+  Object.assign(s.style, { left: px(cx), top: px(H - 30 * mm), width: px(15 * mm), height: px(15 * mm), borderWidth: px(0.7 * mm) });
+  const d = el('seal-d');
+  Object.assign(d.style, { left: px(cx), top: px(H - 30 * mm), width: px(5.2 * mm), height: px(5.2 * mm) });
+  return { fit: 'ok' };
+});
+</script>
+</body>
+</html>

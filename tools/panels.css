@@ -1,0 +1,284 @@
+/* Shared styles for the FRAME museum images:
+   abstract panels, object plaques, hall signs and the entrance sign.
+   Every size is in fixed px: headless Chrome lays the page out in a viewport
+   smaller than the window, so vw/vh units must not be used. */
+
+:root {
+  --card: #fbfaf7;
+  --ink: #1e1c22;      /* 16:1 on the card */
+  --ink-2: #4c4853;    /* 8.5:1 */
+  --ink-3: #5d5864;    /* 6.6:1 */
+  --line: #e4dfd5;
+  --font: 'DM Sans', 'Segoe UI', Arial, sans-serif;
+  /* theme accents, darkened from the brief so accent text is about 5.8:1 on the card */
+  --accent-avatars: #624ad3;
+  --accent-harassment: #ad394c;
+  --accent-bias: #196e64;
+}
+
+body { --accent: var(--ink-2); }
+body[data-theme='avatars'] { --accent: var(--accent-avatars); }
+body[data-theme='harassment'] { --accent: var(--accent-harassment); }
+body[data-theme='bias'] { --accent: var(--accent-bias); }
+body {
+  --tint: color-mix(in srgb, var(--accent) 9%, var(--card));
+  --soft: color-mix(in srgb, var(--accent) 16%, var(--card));
+}
+
+html, body { margin: 0; padding: 0; background: var(--card); }
+body {
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  font-family: var(--font);
+  font-weight: 400;
+  color: var(--ink);
+  font-kerning: normal;
+  font-synthesis: none;
+}
+.size-panel { --w: 1500px; --h: 2000px; }
+.size-plaque { --w: 1600px; --h: 900px; }
+.size-sign { --w: 2400px; --h: 1000px; }
+
+/* Text set in DM Sans' text optical size reads better once the image is
+   scaled down in 3D; large titles keep the automatic (display) cut. */
+.text { font-variation-settings: 'opsz' 14; }
+
+h1, h2, p { margin: 0; font-weight: inherit; }
+
+.card {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--w);
+  height: var(--h);
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  will-change: transform;   /* grayscale antialiasing: no colour fringes in the texture */
+}
+.band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--band);
+  background: var(--accent);
+}
+
+/* ---------- shared pieces ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.6em;
+  height: 2.4em;
+  padding: 0 1.1em 0 0.95em;
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1;
+}
+.chip::before {
+  content: '';
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.title {
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.rule {
+  flex: none;
+  width: var(--rule-w);
+  height: var(--rule-h);
+  background: var(--accent);
+}
+.icon { display: block; flex: none; }
+.cue {
+  display: flex;
+  align-items: center;
+  color: var(--accent);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ---------- A. abstract panel, 1500 x 2000 ---------- */
+
+.panel {
+  --band: 18px;
+  --rule-w: 88px;
+  --rule-h: 6px;
+  padding: 92px 96px 84px;
+}
+.panel .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+}
+.panel .chip { font-size: 25px; align-self: center; }
+.read {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: var(--accent);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.read .badge {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
+.read .badge .icon { width: 60px; height: 60px; }
+.panel .title { margin-top: 60px; font-size: var(--title-px, 60px); }
+.panel .authors { margin-top: 36px; font-size: 33px; line-height: 1.35; font-weight: 500; }
+.panel .venue { margin-top: 10px; font-size: 29px; line-height: 1.38; color: var(--ink-2); }
+.panel .authors, .panel .venue { text-wrap: balance; }
+.panel .rule { margin-top: 50px; }
+.panel .label {
+  margin-top: 30px;
+  font-size: 25px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.panel .abstract {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 26px;
+  font-size: var(--abs-px, 32px);
+  line-height: 1.45;
+}
+.panel .abstract p { text-wrap: pretty; }
+.panel .abstract p + p { margin-top: 0.6em; }
+.panel .abstract b { font-weight: 700; }
+.panel .foot {
+  flex: none;
+  margin: 56px -96px -84px;
+  padding: 34px 96px 52px;
+  background: var(--tint);
+}
+.panel .cue { gap: 16px; font-size: 40px; }
+.panel .cue .icon { width: 56px; height: 56px; margin-left: -7px; }
+/* Medium weight in ink-2 so the thin grey strokes do not fade into the tint
+   once the texture is scaled down; 25px keeps the longest rights notice
+   (schulenberg-2023) on one line. */
+.panel .meta {
+  margin-top: 14px;
+  font-size: 25px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+.panel .meta .doi { white-space: nowrap; }
+
+/* ---------- B. object plaque, 1600 x 900 ---------- */
+
+.plaque {
+  --band: 16px;
+  --rule-w: 72px;
+  --rule-h: 6px;
+  padding: 80px 88px 70px;
+}
+.plaque .chip { font-size: 26px; }
+.plaque .title { margin-top: 40px; font-size: var(--title-px, 60px); }
+.plaque .byline { margin-top: 24px; font-size: 31px; line-height: 1.3; font-weight: 500; color: var(--ink-2); }
+.plaque .rule { margin-top: 34px; }
+.plaque .summary {
+  margin-top: 30px;
+  font-size: var(--summary-px, 34px);
+  line-height: 1.42;
+  text-wrap: pretty;
+}
+.plaque .spacer { flex: 1 1 0; min-height: 0; }
+.plaque .foot {
+  flex: none;
+  margin: 40px -88px -70px;
+  padding: 30px 88px 36px;
+  background: var(--tint);
+}
+.plaque .cue { gap: 14px; font-size: 38px; }
+.plaque .cue .icon { width: 52px; height: 52px; margin-left: -7px; }
+
+/* ---------- C/D. hall signs and entrance sign, 2400 x 1000 ---------- */
+
+/* The copy is pinned to the top, not centred, so the title and rule sit at
+   the same height on every sign whatever the length of the blurb. */
+.sign {
+  --band: 24px;
+  --rule-w: 132px;
+  --rule-h: 10px;
+  justify-content: flex-start;
+  padding: 140px 130px 0;
+  overflow: hidden;
+}
+.sign .copy { position: relative; z-index: 1; max-width: 1500px; }
+.sign .title {
+  font-size: var(--sign-px, 210px);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  text-wrap: nowrap;
+}
+.sign .title span { display: block; }
+.sign .rule { margin-top: 64px; }
+.sign .blurb {
+  margin-top: 52px;
+  max-width: 1480px;
+  font-size: 54px;
+  line-height: 1.36;
+  color: var(--ink-2);
+  text-wrap: balance;
+}
+.sign .motif {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  width: 900px;
+  height: 1000px;
+}
+.library .motif { width: 1200px; }
+
+.tri-band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--band);
+  display: flex;
+}
+.library .rule { display: flex; background: none; }
+.tri-band i, .library .rule i { flex: 1; }
+/* The entrance instruction is the museum's only how-to, so it is set in ink
+   at medium weight, each step led by the mark the visitor meets next. */
+.library .blurb { font-size: 56px; font-weight: 500; color: var(--ink); }
+.library .blurb .step { display: flex; align-items: center; gap: 22px; }
+.library .blurb .icon { width: 60px; height: 60px; }
+.library .blurb .badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+.library .blurb .badge .icon { width: 44px; height: 44px; }

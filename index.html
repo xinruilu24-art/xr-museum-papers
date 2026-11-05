@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#101111">
+<title>Research Library</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23101111'/%3E%3Cpath d='M8 9h7v14H8zM17 9h7v14h-7z' fill='%23f7f7f4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Loaded without blocking scripts; app.js shows a view once the font is ready (or after 500 ms). -->
+<link id="font-css" rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<script src="data/papers.js"></script>
+<script>
+  // A link to a paper hosted here starts fetching its cover and PDF.js while the page loads.
+  // Keep the PDF.js URL in step with assets/pdf-pages.js.
+  (() => {
+    const id = new URLSearchParams(location.search).get('p');
+    if (!window.MUSEUM?.papers?.find(paper => paper.id === id)?.pdf) return;
+    const hint = (rel, href, extra) => document.head.append(Object.assign(document.createElement('link'), {rel, href}, extra));
+    hint('preload', `covers/${id}.webp`, {as: 'image'});
+    hint('preconnect', 'https://cdn.jsdelivr.net', {crossOrigin: 'anonymous'});
+    hint('modulepreload', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.min.mjs', {crossOrigin: 'anonymous'});
+  })();
+</script>
+<link rel="stylesheet" href="assets/site.css">
+<link rel="modulepreload" href="assets/flipbook.js">
+<link rel="modulepreload" href="assets/pdf-pages.js">
+<link rel="modulepreload" href="assets/read-mode.js">
+<script type="module" src="assets/app.js"></script>
+</head>
+<body>
+<noscript><p class="noscript">The Research Library needs JavaScript to show papers.</p></noscript>
+
+<div id="library" class="library" hidden>
+  <header class="library-header">
+    <h1>Research Library</h1>
+    <p class="library-count"></p>
+  </header>
+  <div class="halls"></div>
+</div>
+
+<div id="notice" class="notice" hidden>
+  <h1 class="notice-title"></h1>
+  <p class="notice-text"></p>
+  <a class="notice-link" href="./">Browse the Research Library</a>
+</div>
+
+<div id="reader" class="reader" hidden>
+  <header class="toolbar">
+    <div class="paper-heading">
+      <h1 class="paper-title"></h1>
+      <p class="paper-meta"></p>
+    </div>
+    <div class="pager">
+      <button type="button" class="icon-button" data-previous aria-label="Previous page" title="Previous page" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
+      </button>
+      <output class="counter" aria-live="polite" aria-atomic="true"></output>
+      <button type="button" class="icon-button" data-next aria-label="Next page" title="Next page" aria-disabled="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
+      </button>
+    </div>
+    <div class="actions">
+      <button type="button" class="icon-button icon-button--labelled" data-read aria-haspopup="dialog" aria-label="Read mode" title="Read mode" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M8 10.5h5M10.5 8v5"/></svg>
+        <span class="button-label">Read</span>
+      </button>
+      <button type="button" class="icon-button" data-open-tab aria-label="Open full screen" title="Open full screen" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4.5"/></svg>
+      </button>
+      <button type="button" class="icon-button" data-fullscreen aria-label="Full screen" title="Full screen" aria-pressed="false" hidden>
+        <svg class="icon-enter" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+        <svg class="icon-exit" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>
+      </button>
+      <button type="button" class="icon-button" data-info aria-haspopup="dialog" aria-label="Paper info" title="Paper info">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.6v.01"/></svg>
+      </button>
+      <button type="button" class="icon-button" data-close aria-label="Close" title="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="book"></div>
+    <div class="stage-error" role="alert" hidden>
+      <p>This paper can’t be shown here right now.</p>
+      <a href="#" target="_blank" rel="noopener">Open the original article</a>
+    </div>
+    <div class="tp-frame" hidden>
+      <article class="title-page" aria-labelledby="tp-title">
+        <p class="tp-theme"></p>
+        <h2 class="tp-title" id="tp-title"></h2>
+        <p class="tp-authors"></p>
+        <p class="tp-venue"></p>
+        <a class="tp-link" href="#" target="_blank" rel="noopener"><span class="tp-link-label"></span><span class="visually-hidden"> (opens in a new tab)</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M9 7h8v8"/></svg></a>
+        <p class="tp-license"></p>
+        <div class="tp-abstract"></div>
+      </article>
+    </div>
+  </main>
+
+  <dialog class="read-mode" aria-label="Read mode">
+    <div class="rm-bar">
+      <p class="rm-position"><span class="rm-position-label">Page</span> <output class="rm-indicator" aria-live="polite" aria-atomic="true"></output></p>
+      <div class="rm-zoom-controls">
+        <button type="button" class="icon-button" data-zoom-out aria-label="Zoom out" title="Zoom out">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg>
+        </button>
+        <output class="rm-zoom" aria-live="polite">Fit</output>
+        <button type="button" class="icon-button" data-zoom-in aria-label="Zoom in" title="Zoom in">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12M12 6v12"/></svg>
+        </button>
+      </div>
+      <div class="rm-actions">
+        <button type="button" class="icon-button" data-read-close aria-label="Close read mode" title="Close read mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="rm-scroll" tabindex="0" role="region" aria-label="Pages">
+      <div class="rm-column"></div>
+    </div>
+  </dialog>
+
+  <dialog class="info" aria-labelledby="info-title">
+    <div class="info-body">
+      <button type="button" class="icon-button info-close" data-info-close aria-label="Close paper info" title="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+      <h2 class="info-title" id="info-title"></h2>
+      <p class="info-authors"></p>
+      <dl class="info-details">
+        <div data-row><dt>Published in</dt><dd class="info-venue"></dd></div>
+        <div data-row><dt>Year</dt><dd class="info-year"></dd></div>
+        <div data-row><dt>License</dt><dd class="info-license"></dd></div>
+      </dl>
+      <p class="info-links">
+        <a class="info-link" data-original href="#" target="_blank" rel="noopener">Original article</a>
+        <a class="info-link" data-download href="#">Download PDF</a>
+      </p>
+    </div>
+  </dialog>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+</div>
+</body>
+</html>

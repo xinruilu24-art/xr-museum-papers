@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Object plaque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
+<link rel="stylesheet" href="panels.css">
+</head>
+<body class="size-plaque">
+<main class="card plaque">
+  <div class="band"></div>
+  <span class="chip text" data-slot="theme"></span>
+  <h1 class="title" data-slot="title"></h1>
+  <p class="byline text" data-slot="byline"></p>
+  <div class="rule"></div>
+  <p class="summary text" data-slot="summary"></p>
+  <div class="spacer"></div>
+  <footer class="foot">
+    <p class="cue text"><i data-icon="pointer"></i>Click the object to open the abstract</p>
+  </footer>
+</main>
+<script src="../data/papers.js"></script>
+<script src="panels.js"></script>
+<script>Panels.plaque();</script>
+</body>
+</html>

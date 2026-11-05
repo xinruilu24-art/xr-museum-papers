@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Library entrance sign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&display=swap">
+<link rel="stylesheet" href="panels.css">
+</head>
+<body class="size-sign">
+<main class="card sign library">
+  <div class="tri-band"></div>
+  <svg class="motif" data-slot="motif" viewBox="0 0 900 1000" aria-hidden="true"></svg>
+  <div class="copy">
+    <h1 class="title" data-slot="sign-title"></h1>
+    <div class="rule"></div>
+    <p class="blurb text" data-slot="blurb">Click an object to open its abstract. Click the abstract to read the paper.</p>
+  </div>
+</main>
+<script src="../data/papers.js"></script>
+<script src="panels.js"></script>
+<script>Panels.librarySign();</script>
+</body>
+</html>
