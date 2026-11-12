@@ -36,12 +36,6 @@ function ratioOf(paper) {
   return width > 0 && height > 0 ? width / height : 3 / 4;
 }
 
-// Owner's image reveal: blurred from the first paint, sharpening once decoded.
-function reveal(image) {
-  const done = () => image.classList.add('is-revealed');
-  image.decode().then(done, done);
-}
-
 // Views stay hidden until DM Sans is ready (at most 500 ms by default), so their
 // text paints in it from the first frame instead of swapping fonts. Resolves
 // false when the time runs out first.
@@ -71,7 +65,8 @@ function typo(text) {
 if (!museum?.papers) {
   void showNotice('The library is unavailable', 'The list of papers could not be loaded. Please try again later.', false);
 } else if (!paperId) {
-  void showLibrary();
+  // The collection's homepage lives on the XR Women Research Library site.
+  location.replace('https://abbyabbyzzz.github.io/xr-women-library/');
 } else {
   const paper = museum.papers.find(item => item.id === paperId);
   if (paper) void showReader(paper);
@@ -87,80 +82,6 @@ async function showNotice(heading, text, withLink, title = 'Research Library') {
   root.classList.add('is-notice');
   await fontsReady(notice);
   notice.hidden = false;
-}
-
-async function showLibrary() {
-  document.title = 'Research Library';
-  root.classList.add('is-library');
-  const library = document.getElementById('library');
-  const halls = library.querySelector('.halls');
-  const themes = museum.themes || [];
-  library.querySelector('.library-count').textContent = `${museum.papers.length} papers · ${themes.length} halls`;
-  for (const theme of themes) {
-    const papers = museum.papers.filter(paper => paper.theme === theme.id);
-    if (!papers.length) continue;
-    const section = element('section', 'hall');
-    section.style.setProperty('--accent', ACCENTS[theme.id] || LAVENDER);
-    section.setAttribute('aria-labelledby', 'hall-' + theme.id);
-    const head = element('div', 'hall-head');
-    const name = element('h2', 'hall-name', theme.name);
-    name.id = 'hall-' + theme.id;
-    head.append(name, element('p', 'hall-blurb', theme.blurb));
-    const list = element('ul', 'cards');
-    // Covers stand on a shelf as tall as the hall's tallest page, so the titles line up.
-    list.style.setProperty('--shelf', String(Math.min(...papers.map(ratioOf))));
-    for (const paper of papers) list.append(card(paper, themes));
-    section.append(head, list);
-    halls.append(section);
-  }
-  await fontsReady(library);
-  library.hidden = false;
-}
-
-function card(paper, themes) {
-  const item = element('li');
-  const link = element('a', 'card');
-  link.href = '?p=' + encodeURIComponent(paper.id);
-  const shelf = element('span', 'card-shelf');
-  const frame = element('span', 'card-cover');
-  // The frame takes the page's own aspect ratio, so the cover fills it exactly.
-  frame.style.aspectRatio = String(ratioOf(paper));
-  if (paper.pdf) {
-    const image = new Image();
-    image.className = 'reveal';
-    image.alt = '';
-    image.loading = 'lazy';
-    image.decoding = 'async';
-    image.src = `covers/${paper.id}.webp`;
-    reveal(image);
-    frame.append(image);
-  } else {
-    // A paper that isn't hosted here has no page image: a typeset first page stands in.
-    const page = element('span', 'card-page');
-    page.setAttribute('aria-hidden', 'true');
-    page.append(
-      element('span', 'card-page-title', typo(paper.title)),
-      element('span', 'card-page-authors', (paper.authors || []).join(', ')),
-      element('span', 'card-page-venue', typo(paper.venue || '')),
-      element('span', 'card-page-abstract', typo((paper.abstract || []).join(' '))),
-    );
-    frame.append(page);
-  }
-  shelf.append(frame);
-  link.append(shelf, element('span', 'card-title', typo(paper.shortTitle || paper.title)), element('span', 'card-meta', [paper.authorsShort, paper.year].filter(Boolean).join(' · ')));
-  // Other halls this paper also belongs to.
-  const others = (paper.tags || []).filter(tag => tag !== paper.theme).map(tag => themes.find(theme => theme.id === tag)).filter(Boolean);
-  if (others.length) {
-    const chips = element('span', 'card-chips');
-    for (const theme of others) {
-      const chip = element('span', 'chip', theme.name);
-      chip.style.setProperty('--chip', '#ffffff');
-      chips.append(chip);
-    }
-    link.append(chips);
-  }
-  item.append(link);
-  return item;
 }
 
 // A PDF on another host gets its connection opened while PDF.js loads.
