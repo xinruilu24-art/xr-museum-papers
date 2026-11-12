@@ -218,6 +218,7 @@ async function showReader(paper) {
     onChange: syncUrl,
   });
   const loadingTimer = setTimeout(() => flip.setStatus('Loading…'), 700);
+  wireBookZoom(reader, flip);
 
   await fontsReady(reader);
   reader.hidden = false;
@@ -290,8 +291,8 @@ async function showTitlePage(paper) {
   document.title = `${typo(paper.shortTitle || paper.title)} · Research Library`;
   $('.paper-title').textContent = typo(paper.shortTitle || paper.title);
   $('.paper-meta').textContent = [paper.authorsShort, paper.year].filter(Boolean).join(' · ');
-  // The page itself carries the details, so the book and its pager go.
-  for (const node of [$('.book'), $('.pager')]) node.hidden = true;
+  // The page itself carries the details, so the book, its pager and page size go.
+  for (const node of [$('.book'), $('.pager'), $('.zoom')]) node.hidden = true;
   fillLinks(paper, reader);
   wireBack(reader);
   fillTitlePage(paper, page);
@@ -408,6 +409,28 @@ function syncUrl(index) {
   if (index > 0) url.searchParams.set('page', String(index + 1));
   else url.searchParams.delete('page');
   if (url.href !== location.href) history.replaceState(history.state, '', url);
+}
+
+// Page size: Fit shows the whole spread; bigger sizes scroll, and dragging moves the page.
+function wireBookZoom(reader, flip) {
+  const BOOK_ZOOMS = [1, 1.5, 2, 2.5];
+  const out = reader.querySelector('[data-book-zoom-out]');
+  const into = reader.querySelector('[data-book-zoom-in]');
+  const level = reader.querySelector('.zoom-level');
+  const show = () => {
+    const step = BOOK_ZOOMS.indexOf(flip.zoom);
+    out.disabled = step <= 0;
+    into.disabled = step >= BOOK_ZOOMS.length - 1;
+    level.textContent = flip.zoom === 1 ? 'Fit' : Math.round(flip.zoom * 100) + '%';
+  };
+  const go = delta => {
+    const step = Math.max(0, Math.min(BOOK_ZOOMS.length - 1, BOOK_ZOOMS.indexOf(flip.zoom) + delta));
+    flip.setZoom(BOOK_ZOOMS[step]);
+    show();
+  };
+  out.addEventListener('click', () => go(-1));
+  into.addEventListener('click', () => go(1));
+  show();
 }
 
 // The toolbar's links: download (hosted papers only), the DOI page, and the whole collection.

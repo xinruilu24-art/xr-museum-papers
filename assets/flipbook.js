@@ -25,6 +25,14 @@ export function createFlipbook(options) {
   let cover = null;
   let status = '';
   let bookShown = false;
+  // Book zoom: 1 fits the whole spread on the stage; above 1 the stage scrolls.
+  let zoom = 1;
+  let shownIndex = -1;
+  // Sets the stage's scroll area to the zoomed book plus its margins.
+  const spacer = document.createElement('div');
+  spacer.className = 'stage-spacer';
+  spacer.setAttribute('aria-hidden', 'true');
+  stage.prepend(spacer);
 
   function clampIndex(index) {
     return Math.max(0, Math.min(count - 1, Math.trunc(index) || 0));
@@ -191,6 +199,9 @@ export function createFlipbook(options) {
     for (let i = visible.at(-1) + 1; i <= Math.min(count - 1, current + 4); i++) ahead.push(i);
     for (let i = current - 1; i >= Math.max(0, current - 2); i--) ahead.push(i);
     rasters.want(visible, ahead);
+    // A zoomed reader starts each new spread at its top left, where reading starts.
+    if (zoom > 1 && current !== shownIndex) stage.scrollTo(0, 0);
+    shownIndex = current;
     onChange(current, visible);
   }
   function commit(index, destination = spread(index)) {
@@ -400,7 +411,32 @@ export function createFlipbook(options) {
     } else settleDrag(gesture);
   }
   // Anchored mouse dragging: the sheet follows the pointer; the book stays put.
+  let panning = null;
   stage.addEventListener('pointerdown', event => {
+    if (zoom === 1 || event.pointerType !== 'mouse' || event.button !== 0) return;
+    // Not on the stage's own scrollbars.
+    const rect = stage.getBoundingClientRect();
+    if (event.clientX - rect.left >= stage.clientWidth || event.clientY - rect.top >= stage.clientHeight) return;
+    panning = {pointerId: event.pointerId, x: event.clientX, y: event.clientY, left: stage.scrollLeft, top: stage.scrollTop};
+    stage.setPointerCapture(event.pointerId);
+    stage.classList.add('is-panning');
+    event.preventDefault();
+  });
+  stage.addEventListener('pointermove', event => {
+    if (!panning || panning.pointerId !== event.pointerId) return;
+    stage.scrollTo(panning.left - (event.clientX - panning.x), panning.top - (event.clientY - panning.y));
+  });
+  const endPan = event => {
+    if (!panning || (event && panning.pointerId !== event.pointerId)) return;
+    panning = null;
+    stage.classList.remove('is-panning');
+  };
+  stage.addEventListener('pointerup', endPan);
+  stage.addEventListener('pointercancel', endPan);
+  stage.addEventListener('lostpointercapture', endPan);
+
+  stage.addEventListener('pointerdown', event => {
+    if (zoom > 1) return;
     if (event.pointerType !== 'mouse' || event.button !== 0 || active || dragging || reader.dataset.ready !== 'true' || !enabled) return;
     const page = [...book.querySelectorAll('.page')].find(page => {
       const rect = page.getBoundingClientRect();
@@ -442,9 +478,10 @@ export function createFlipbook(options) {
   next.addEventListener('click', () => void turn(1));
 
   function layout() {
-    const width = stage.clientWidth, height = stage.clientHeight;
+    // The stage's full box: a zoomed book's scrollbars must not resize it.
+    const width = stage.offsetWidth, height = stage.offsetHeight;
     const density = window.devicePixelRatio || 1;
-    const size = [width, height, density, count].join(':');
+    const size = [width, height, density, count, zoom].join(':');
     if (!width || !height || size === lastSize) return;
     lastSize = size;
     ++version;
@@ -462,9 +499,9 @@ export function createFlipbook(options) {
     orientation = width < 520 || width / height < ratio * 1.2 ? 'portrait' : 'landscape';
     if (orientation === 'landscape' && current > 0 && current % 2 === 0) current--;
     const columns = orientation === 'landscape' ? 2 : 1;
-    const gutterX = width < 600 ? 12 : 32;
-    const gutterY = height < 480 ? 12 : 28;
-    const fit = Math.min((width - gutterX * 2) / columns, (height - gutterY * 2) * ratio);
+    const gutterX = width < 600 ? 12 : 24;
+    const gutterY = height < 480 ? 12 : 16;
+    const fit = Math.min((width - gutterX * 2) / columns, (height - gutterY * 2) * ratio) * zoom;
     // Page sizes and positions land on whole device pixels (an even page width
     // keeps the half-page cover offset there too), so settled text stays crisp.
     const deviceWidth = Math.max(2, Math.floor(fit * density / 2) * 2);
@@ -483,8 +520,13 @@ export function createFlipbook(options) {
     const snap = (start, value) => Math.round((start + value) * density) / density - start;
     book.style.width = bookWidth + 'px';
     book.style.height = pageHeight + 'px';
-    book.style.left = snap(origin.left, (width - bookWidth) / 2) + 'px';
-    book.style.top = snap(origin.top, (height - pageHeight) / 2) + 'px';
+    // Centred while it fits; a zoomed book keeps its margins and scrolls.
+    const left = Math.max(gutterX, (width - bookWidth) / 2);
+    const top = Math.max(gutterY, (height - pageHeight) / 2);
+    book.style.left = snap(origin.left, left) + 'px';
+    book.style.top = snap(origin.top, top) + 'px';
+    spacer.style.width = Math.floor(left + bookWidth + gutterX) + 'px';
+    spacer.style.height = Math.floor(top + pageHeight + gutterY) + 'px';
     book.style.setProperty('--leaf-width', pageWidth + 'px');
     commit(current, spread(current));
     reader.dataset.ready = 'true';
@@ -496,6 +538,15 @@ export function createFlipbook(options) {
     query.addEventListener('change', () => { layout(); watchDensity(); }, {once: true});
   }
   watchDensity();
+
+  // Zooms the book (1 = fit) and starts the view at its top left.
+  function setZoom(value) {
+    if (!(value > 0) || value === zoom) return;
+    zoom = value;
+    stage.classList.toggle('is-zoomed', zoom > 1);
+    layout();
+    stage.scrollTo(0, 0);
+  }
 
   // Jumps without animation, e.g. when read mode closes.
   function goTo(index) {
@@ -534,6 +585,8 @@ export function createFlipbook(options) {
   return {
     layout,
     goTo,
+    setZoom,
+    get zoom() { return zoom; },
     enable,
     setStatus,
     visiblePages: () => visiblePages(),

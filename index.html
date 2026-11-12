@@ -87,6 +87,15 @@
   </main>
 
   <footer class="reader-footer">
+    <div class="zoom" role="group" aria-label="Page size">
+      <button type="button" class="icon-button" data-book-zoom-out aria-label="Make pages smaller" title="Smaller" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg>
+      </button>
+      <output class="zoom-level" aria-live="polite">Fit</output>
+      <button type="button" class="icon-button" data-book-zoom-in aria-label="Make pages bigger" title="Bigger">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12M12 6v12"/></svg>
+      </button>
+    </div>
     <div class="pager">
       <button type="button" class="icon-button" data-previous aria-label="Previous page" title="Previous page" aria-disabled="true">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>
