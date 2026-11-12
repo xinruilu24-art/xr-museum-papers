@@ -8,6 +8,9 @@ const PLUM = '#2E1756';
 const ACCENTS = {avatars: LAVENDER, harassment: LAVENDER, bias: LAVENDER};
 // Ink for the label and link button on the typeset title page, a white sheet.
 const INKS = {avatars: PLUM, harassment: PLUM, bias: PLUM};
+// The FRAME space Back to FRAME opens when there is no FRAME tab to return to.
+// A link can name another space with ?frame=<space name or framevr.io URL>.
+const FRAME_HOME = 'https://framevr.io/mainhub';
 const root = document.documentElement;
 const params = new URLSearchParams(location.search);
 const paperId = params.get('p');
@@ -372,12 +375,30 @@ function fillLinks(paper, reader) {
   }
 }
 
-// FRAME opens the reader in a new tab, so going back means closing it. Inside
-// FRAME's embedded overlay, or a tab the browser won't close, a note says how.
+// A framevr.io address (a bare space name counts), or null.
+function frameUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value, 'https://framevr.io/');
+    const host = url.hostname;
+    return url.protocol === 'https:' && (host === 'framevr.io' || host.endsWith('.framevr.io')) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+// Back to FRAME:
+// - FRAME opened this tab: closing it returns to the space, avatar and all.
+// - FRAME opened the reader in its own tab: step back to it.
+// - Otherwise (a shared link, a bookmark): open the FRAME space here.
+// Inside FRAME's embedded overlay, the panel has its own close button.
 function wireBack(reader) {
   const inFrame = (() => {
     try { return window.self !== window.top; } catch { return true; }
   })();
+  const fromFrame = frameUrl(document.referrer);
+  // Browsers usually send only https://framevr.io/ as the referrer, which is not a space.
+  const space = frameUrl(params.get('frame')) || (fromFrame && new URL(fromFrame).pathname.length > 1 ? fromFrame : null) || FRAME_HOME;
   reader.querySelector('[data-back]').addEventListener('click', () => {
     if (inFrame) {
       showToast(reader.querySelector('.toast'), 'Close this panel to return to FRAME.');
@@ -385,8 +406,10 @@ function wireBack(reader) {
     }
     window.close();
     setTimeout(() => {
-      if (!window.closed) showToast(reader.querySelector('.toast'), 'Close this tab to return to FRAME.');
-    }, 300);
+      if (window.closed) return;
+      if (fromFrame && history.length > 1) history.back();
+      else location.assign(space);
+    }, 150);
   });
 }
 
