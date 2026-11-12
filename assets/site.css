@@ -1,15 +1,21 @@
 :root {
-  --bg: #101111;
-  --raised: #181a1a;
-  --hover: #242727;
-  --line: #222525;
-  --text: #f7f7f4;
-  --muted: #a6aba8;
-  --accent: #ef8f9b;
+  /* Black background and white text; only buttons and icons are purple (Penny's palette). */
+  --lavender: #B3A1D7;
+  --plum: #2E1756;
+  --bg: #000000;
+  --raised: #000000;
+  --hover: var(--plum);
+  --line: rgba(255, 255, 255, .16);
+  --text: #ffffff;
+  --muted: #ffffff;
+  --accent: var(--lavender);
+  /* Behind a PDF page or cover image, matching the PDF's own white. */
   --paper: #ffffff;
-  --paper-ink: #101111;
-  --paper-muted: #626764;
-  --paper-line: #e2e4e1;
+  /* Typeset sheets (a paper read at its publisher, and its library card): a white page like the PDFs. */
+  --sheet: #ffffff;
+  --sheet-ink: #000000;
+  --sheet-muted: #000000;
+  --sheet-line: rgba(0, 0, 0, .16);
   --sans: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   --reveal: filter 1000ms cubic-bezier(.2, .65, .3, 1);
   color-scheme: dark;
@@ -45,7 +51,7 @@ button { font: inherit; color: inherit; }
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: inherit;
+  color: var(--accent);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -60,19 +66,17 @@ button { font: inherit; color: inherit; }
   stroke-linejoin: round;
 }
 .icon-button:focus-visible { outline-offset: 2px; }
+.icon-button { text-decoration: none; }
 .icon-button:disabled,
-.icon-button[aria-disabled="true"] { opacity: .28; cursor: default; }
-.icon-button--labelled { padding: 0 14px 0 10px; }
-.button-label { font-size: 14px; font-weight: 500; letter-spacing: .01em; }
+.icon-button[aria-disabled="true"] { color: var(--plum); cursor: default; }
 /* Hover feedback only where the pointer can hover; after a tap it would stick. */
 @media (hover: hover) {
   .icon-button:hover { color: var(--accent); background: var(--hover); }
   .icon-button:disabled:hover,
-  .icon-button[aria-disabled="true"]:hover { color: inherit; background: transparent; }
+  .icon-button[aria-disabled="true"]:hover { color: var(--plum); background: transparent; }
 }
 
-/* Pill links: the actions of the info dialog, the load error and the not-found page */
-.info-link,
+/* Pill links: the load error and the not-found page */
 .stage-error a,
 .notice-link {
   display: inline-flex;
@@ -87,7 +91,6 @@ button { font: inherit; color: inherit; }
   text-decoration: none;
 }
 @media (hover: hover) {
-  .info-link:hover,
   .stage-error a:hover,
   .notice-link:hover { background: var(--accent); color: var(--bg); }
 }
@@ -96,11 +99,10 @@ button { font: inherit; color: inherit; }
 html.is-reader,
 html.is-reader body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 .reader { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); }
-.toolbar,
-.rm-bar {
+.toolbar {
   flex: none;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   min-height: 60px;
@@ -113,13 +115,39 @@ html.is-reader body { height: 100%; overflow: hidden; overscroll-behavior: none;
 .paper-meta { margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .paper-title { font-size: 15px; font-weight: 500; line-height: 1.3; }
 .paper-meta { margin-top: 2px; font-size: 13px; line-height: 1.3; color: var(--muted); }
+/* Bottom row: the pager in the middle, Back to FRAME on the right. */
+.reader-footer {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
 .pager { grid-column: 2; display: flex; align-items: center; gap: 4px; }
+.back-button {
+  grid-column: 3;
+  justify-self: end;
+  min-height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--plum);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  .back-button:hover { background: var(--lavender); color: #000000; }
+}
 .counter { min-width: 6.2em; text-align: center; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .counter.is-status { color: var(--muted); }
-.actions { grid-column: 3; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
-[data-fullscreen] .icon-exit,
-[data-fullscreen][aria-pressed="true"] .icon-enter { display: none; }
-[data-fullscreen][aria-pressed="true"] .icon-exit { display: block; }
+.actions { grid-column: 2; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
 
 .stage { position: relative; flex: 1; min-height: 0; overflow: hidden; }
 .book {
@@ -131,8 +159,6 @@ html.is-reader body { height: 100%; overflow: hidden; overscroll-behavior: none;
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  /* Follows the visible outline: single cover, spread, or turning sheet. */
-  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .5));
 }
 .page { position: absolute; top: 0; width: var(--leaf-width); height: 100%; background: var(--paper); overflow: hidden; }
 .page[data-side="left"],
@@ -165,16 +191,15 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
   flex-direction: column;
   margin: auto;
   padding: calc(46px * var(--s)) calc(46px * var(--s)) calc(38px * var(--s));
-  background: var(--paper);
-  color: var(--paper-ink);
-  box-shadow: 0 14px 26px rgba(0, 0, 0, .5);
+  background: var(--sheet);
+  color: var(--sheet-ink);
 }
 .title-page :focus-visible { outline-color: var(--theme-ink); }
 .tp-theme { margin: 0; font-size: max(11px, calc(11.5px * var(--s))); font-weight: 500; line-height: 1.3; letter-spacing: .14em; text-transform: uppercase; color: var(--theme-ink); }
 .tp-title { margin: calc(14px * var(--s)) 0 0; font-size: calc(22px * var(--s)); font-weight: 500; line-height: 1.27; text-wrap: pretty; }
 .tp-authors { margin: calc(14px * var(--s)) 0 0; font-size: calc(15px * var(--s)); font-weight: 500; line-height: 1.45; }
-.tp-venue { margin: calc(3px * var(--s)) 0 0; font-size: max(12px, calc(13.5px * var(--s))); line-height: 1.45; color: var(--paper-muted); text-wrap: pretty; }
-.tp-abstract { margin-top: calc(24px * var(--s)); padding-top: calc(22px * var(--s)); border-top: 1px solid var(--paper-line); font-size: calc(15px * var(--s)); line-height: 1.6; }
+.tp-venue { margin: calc(3px * var(--s)) 0 0; font-size: max(12px, calc(13.5px * var(--s))); line-height: 1.45; color: var(--sheet-muted); text-wrap: pretty; }
+.tp-abstract { margin-top: calc(24px * var(--s)); padding-top: calc(22px * var(--s)); border-top: 1px solid var(--sheet-line); font-size: calc(15px * var(--s)); line-height: 1.6; }
 .tp-abstract p { margin: 0; text-wrap: pretty; }
 .tp-abstract p + p { margin-top: .7em; }
 .tp-link {
@@ -194,9 +219,9 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 }
 .tp-link svg { flex: none; width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 @media (hover: hover) {
-  .tp-link:hover { background: var(--theme-ink); color: var(--paper); }
+  .tp-link:hover { background: var(--theme-ink); color: var(--sheet); }
 }
-.tp-license { margin: calc(10px * var(--s)) 0 0; font-size: max(11px, calc(12px * var(--s))); line-height: 1.45; color: var(--paper-muted); }
+.tp-license { margin: calc(10px * var(--s)) 0 0; font-size: max(11px, calc(12px * var(--s))); line-height: 1.45; color: var(--sheet-muted); }
 /* The column keeps the book's small-stage gutters and a 640px measure. */
 .tp-frame.is-column { padding: 12px 12px 24px; }
 .tp-frame.is-column .title-page { flex: 1 1 auto; width: 100%; max-width: 688px; min-width: 0; margin: 0 auto; padding: 26px 24px 32px; }
@@ -213,56 +238,12 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
   color: var(--bg);
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
   opacity: 0;
   transform: translate(-50%, 8px);
   transition: opacity .2s ease, transform .2s ease;
   pointer-events: none;
 }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
-
-/* Read mode */
-.read-mode {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  background: #0b0c0c;
-  color: var(--text);
-}
-.read-mode[open] { display: flex; flex-direction: column; }
-/* The dialog itself is opaque, so its fade crosses over the book rather than through black. */
-.read-mode::backdrop { background: transparent; }
-.rm-position { grid-column: 1; margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rm-position-label { color: var(--muted); }
-.rm-zoom-controls { grid-column: 2; display: flex; align-items: center; gap: 4px; }
-.rm-zoom { min-width: 4.4em; text-align: center; font-size: 15px; font-variant-numeric: tabular-nums; }
-.rm-actions { grid-column: 3; display: flex; justify-content: flex-end; }
-.rm-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.rm-scroll:focus:not(:focus-visible) { outline: none; }
-/* Inset, so the dialog's edges do not clip it. */
-.rm-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.rm-column {
-  --gutter: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  width: max-content;
-  min-width: 100%;
-  padding: 20px var(--gutter) 56px;
-}
-.rm-page { position: relative; flex: none; overflow: hidden; background: var(--paper); box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
-/* A page's canvases: one, or tiles when the render exceeds the canvas size limit. */
-.rm-sheet { position: absolute; inset: 0; transition: var(--reveal); }
-.rm-sheet.is-blurred { filter: blur(6px); }
-.rm-canvas { position: absolute; display: block; }
 
 /* PDF.js text layer: transparent text over the page, for selecting, searching and screen readers. */
 .textLayer {
@@ -280,32 +261,8 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 }
 .textLayer :is(span, br) { position: absolute; color: transparent; white-space: pre; cursor: text; transform-origin: 0% 0%; }
 .textLayer span.markedContent { top: 0; height: 0; }
-.textLayer ::selection { background: rgba(0, 0, 255, .25); background: color-mix(in srgb, var(--accent) 45%, transparent); }
+.textLayer ::selection { background: rgba(179, 161, 215, .45); }
 .textLayer br::selection { background: transparent; }
-
-/* Paper info */
-.info {
-  width: min(560px, calc(100% - 32px));
-  max-height: calc(100% - 32px);
-  margin: auto;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--raised);
-  color: var(--text);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
-}
-.info::backdrop { background: rgba(5, 6, 6, .66); }
-.info-body { position: relative; padding: 28px 28px 26px; }
-.info-close { position: absolute; top: 10px; right: 10px; }
-.info-title { margin: 0 44px 10px 0; font-size: 20px; font-weight: 500; line-height: 1.35; text-wrap: pretty; }
-.info-authors { margin: 0 0 20px; font-size: 15px; line-height: 1.55; color: var(--muted); }
-.info-details { display: grid; gap: 10px; margin: 0 0 24px; }
-.info-details > div { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 12px; }
-.info-details dt { padding-top: 2px; font-size: 13px; color: var(--muted); }
-.info-details dd { margin: 0; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
-.info-details a { color: var(--accent); text-underline-offset: 3px; }
-.info-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
 
 /* Library */
 .library { width: min(100% - 64px, 1160px); margin: 0 auto; padding: 64px 0 96px; }
@@ -313,7 +270,7 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 .library-header h1 { margin: 0; font-size: clamp(34px, 4.4vw, 52px); font-weight: 500; line-height: 1.1; letter-spacing: -.02em; }
 .library-count { margin: 12px 0 0; font-size: 15px; color: var(--muted); }
 .hall { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 28px 56px; padding: 36px 0 48px; border-top: 1px solid var(--line); }
-.hall-head::before { content: ''; display: block; width: 36px; height: 3px; margin-bottom: 18px; border-radius: 2px; background: var(--accent); }
+.hall-head::before { content: ''; display: block; width: 36px; height: 3px; margin-bottom: 18px; border-radius: 2px; background: var(--text); }
 .hall-name { margin: 0 0 10px; font-size: 24px; font-weight: 500; line-height: 1.25; }
 .hall-blurb { max-width: 34ch; margin: 0; font-size: 15px; line-height: 1.65; color: var(--muted); }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 36px 28px; align-items: start; margin: 0; padding: 0; list-style: none; }
@@ -326,18 +283,17 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
   overflow: hidden;
   background: var(--paper);
   border-radius: 2px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, .45);
   transition: transform .25s cubic-bezier(.2, .65, .3, 1);
 }
 .card-cover img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* A typeset first page, for papers without a page image, set at page scale
    like the covers beside it; the abstract fills it as body text. */
-.card-page { container-type: inline-size; display: flex; flex-direction: column; height: 100%; padding: 13% 11% 12%; color: var(--paper-ink); }
+.card-page { container-type: inline-size; display: flex; flex-direction: column; height: 100%; padding: 13% 11% 12%; background: var(--sheet); color: var(--sheet-ink); }
 .card-page > span { display: block; }
 .card-page-title { font-size: 5.4cqw; font-weight: 500; line-height: 1.25; text-wrap: pretty; }
 .card-page-authors { margin-top: 3.6cqw; font-size: 3.5cqw; line-height: 1.4; }
-.card-page-venue { margin-top: 1cqw; font-size: 3.2cqw; line-height: 1.4; color: var(--paper-muted); }
-.card-page-abstract { flex: 1 1 0; min-height: 0; overflow: hidden; margin-top: 5cqw; padding-top: 4.5cqw; border-top: 1px solid var(--paper-line); font-size: 2.9cqw; line-height: 1.5; color: #3d4140; text-align: justify; }
+.card-page-venue { margin-top: 1cqw; font-size: 3.2cqw; line-height: 1.4; color: var(--sheet-muted); }
+.card-page-abstract { flex: 1 1 0; min-height: 0; overflow: hidden; margin-top: 5cqw; padding-top: 4.5cqw; border-top: 1px solid var(--sheet-line); font-size: 2.9cqw; line-height: 1.5; color: var(--sheet-ink); text-align: justify; }
 .card-title { display: block; margin-top: 16px; font-size: 16px; font-weight: 500; line-height: 1.35; text-wrap: pretty; transition: color .2s ease; }
 .card-meta { display: block; margin-top: 5px; font-size: 14px; color: var(--muted); }
 .card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
@@ -356,33 +312,28 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 .notice-text { margin: 0; color: var(--muted); }
 .notice-link { margin-top: 8px; }
 
-/* Compact toolbars: icons only */
+/* Compact bars */
 @media (max-width: 860px), (max-height: 480px) {
   .toolbar,
-  .rm-bar { min-height: 52px; gap: 8px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; }
-  .button-label { display: none; }
-  .icon-button--labelled { padding: 0 10px; }
+  .reader-footer { min-height: 52px; gap: 8px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; }
+  .reader-footer { padding-top: 4px; padding-bottom: max(4px, env(safe-area-inset-bottom)); }
 }
 @media (max-width: 600px) {
   .toolbar,
-  .rm-bar { gap: 4px; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
+  .reader-footer { gap: 4px; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
   .icon-button { padding: 0; }
   .pager,
   .actions { gap: 0; }
   .counter { min-width: 5.4em; font-size: 14px; }
   .paper-title { font-size: 14px; }
   .paper-meta { font-size: 12px; }
-  .rm-position-label { display: none; }
+  .back-button { padding: 0 14px; }
 }
-@media (max-width: 560px) {
-  .toolbar { grid-template-columns: minmax(0, 1fr) auto auto; }
-}
-/* Tall phones: the title gets its own line above the pager. */
-@media (max-width: 480px) and (min-height: 560px) {
-  .toolbar { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "heading actions" "pager pager"; row-gap: 0; }
-  .paper-heading { grid-area: heading; padding-left: 4px; }
-  .actions { grid-area: actions; }
-  .pager { grid-area: pager; justify-content: center; }
+/* Narrow phones: the pager moves to the left so it never meets the button. */
+@media (max-width: 420px) {
+  .reader-footer { grid-template-columns: minmax(0, 1fr) auto; }
+  .pager { grid-column: 1; }
+  .back-button { grid-column: 2; }
 }
 @media (max-width: 760px) {
   .library { width: calc(100% - 40px); padding: 40px 0 64px; }
@@ -393,12 +344,10 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .page canvas,
-  .rm-sheet,
   .reveal,
   .card-cover,
   .card-title,
   .toast { transition: none; }
   .page.is-blurred canvas,
-  .rm-sheet.is-blurred,
   .reveal:not(.is-revealed) { filter: none; }
 }

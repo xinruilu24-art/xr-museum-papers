@@ -212,7 +212,7 @@ function errorPage(width, height, index) {
   const context = canvas.getContext('2d', {alpha: false});
   context.fillStyle = '#ffffff';
   context.fillRect(0, 0, width, height);
-  context.fillStyle = '#7a7f7c';
+  context.fillStyle = '#2E1756';
   context.font = `${Math.max(12, Math.round(width / 32))}px "DM Sans", system-ui, sans-serif`;
   context.textAlign = 'center';
   context.fillText(`Page ${index + 1} could not be displayed.`, width / 2, height / 2);

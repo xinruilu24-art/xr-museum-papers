@@ -1,10 +1,12 @@
 import {createFlipbook} from './flipbook.js';
 import {BookRasters, openPdf} from './pdf-pages.js';
-import {createReadMode} from './read-mode.js';
 
-const ACCENTS = {avatars: '#b9a7ff', harassment: '#ef8f9b', bias: '#7fd1c7'};
-// The same themes as darker inks, for text on a white page.
-const INKS = {avatars: '#624ad3', harassment: '#ad394c', bias: '#196e64'};
+// Black background and white text; buttons and links are purple (Penny's palette).
+const LAVENDER = '#B3A1D7';
+const PLUM = '#2E1756';
+const ACCENTS = {avatars: LAVENDER, harassment: LAVENDER, bias: LAVENDER};
+// Ink for the label and link button on the typeset title page, a white sheet.
+const INKS = {avatars: PLUM, harassment: PLUM, bias: PLUM};
 const root = document.documentElement;
 const params = new URLSearchParams(location.search);
 const paperId = params.get('p');
@@ -97,7 +99,7 @@ async function showLibrary() {
     const papers = museum.papers.filter(paper => paper.theme === theme.id);
     if (!papers.length) continue;
     const section = element('section', 'hall');
-    section.style.setProperty('--accent', ACCENTS[theme.id] || '#f7f7f4');
+    section.style.setProperty('--accent', ACCENTS[theme.id] || LAVENDER);
     section.setAttribute('aria-labelledby', 'hall-' + theme.id);
     const head = element('div', 'hall-head');
     const name = element('h2', 'hall-name', theme.name);
@@ -151,7 +153,7 @@ function card(paper, themes) {
     const chips = element('span', 'card-chips');
     for (const theme of others) {
       const chip = element('span', 'chip', theme.name);
-      chip.style.setProperty('--chip', ACCENTS[theme.id] || '#f7f7f4');
+      chip.style.setProperty('--chip', '#ffffff');
       chips.append(chip);
     }
     link.append(chips);
@@ -182,16 +184,6 @@ async function showReader(paper) {
   const $ = selector => reader.querySelector(selector);
   const stage = $('.stage');
   const book = $('.book');
-  const readButton = $('[data-read]');
-  const openTabButton = $('[data-open-tab]');
-  const fullscreenButton = $('[data-fullscreen]');
-  const infoButton = $('[data-info]');
-  const closeButton = $('[data-close]');
-  const info = $('.info');
-  const toast = $('.toast');
-  const inFrame = (() => {
-    try { return window.self !== window.top; } catch { return true; }
-  })();
 
   // The paper starts downloading before anything waits.
   preconnect(paper.pdf);
@@ -203,7 +195,8 @@ async function showReader(paper) {
   document.title = `${paper.shortTitle || paper.title} · Research Library`;
   $('.paper-title').textContent = paper.shortTitle || paper.title;
   $('.paper-meta').textContent = [paper.authorsShort, paper.year].filter(Boolean).join(' · ');
-  fillInfo(paper, info);
+  fillLinks(paper, reader);
+  wireBack(reader);
 
   const ratio = ratioOf(paper);
   const startPage = Number.parseInt(params.get('page'), 10);
@@ -229,39 +222,10 @@ async function showReader(paper) {
   flip.layout();
   new ResizeObserver(() => flip.layout()).observe(stage);
 
-  // The click that closes a dialog can be followed by a second one (a
-  // double-click) on the toolbar button underneath, such as Close: ignore it.
-  let guardUntil = 0;
-  const guardActions = () => { guardUntil = performance.now() + 500; };
-  $('.actions').addEventListener('click', event => {
-    if (event.detail > 0 && performance.now() < guardUntil) event.stopImmediatePropagation();
-  }, true);
-  info.addEventListener('close', guardActions);
-
-  let readMode = null;
   pdf.then(source => {
     clearTimeout(loadingTimer);
     rasters.attach(source);
-    readMode = createReadMode({
-      dialog: $('.read-mode'),
-      source,
-      pageCount: source.numPages,
-      fallbackRatio: ratio,
-      standIn: index => rasters.standIn(index),
-      onClose: index => {
-        guardActions();
-        flip.goTo(index);
-      },
-      onOpenChange: open => {
-        rasters.setDeferred(open);
-        if (!open) guardActions();
-      },
-    });
-    rasters.setFallback(index => readMode.canvasFor(index));
     flip.enable(source.numPages);
-    readButton.disabled = false;
-    // Page sizes for read mode, fetched while the reader is idle.
-    setTimeout(() => source.pageSizes().catch(() => {}), 1200);
   }, () => {
     clearTimeout(loadingTimer);
     flip.setStatus('');
@@ -273,50 +237,6 @@ async function showReader(paper) {
     else link.hidden = true;
     error.hidden = false;
   });
-
-  readButton.addEventListener('click', () => {
-    if (readMode) void readMode.open(flip.visiblePages()[0]);
-  });
-  const closeInfo = () => {
-    guardActions();
-    info.close();
-  };
-  infoButton.addEventListener('click', () => info.showModal());
-  info.querySelector('[data-info-close]').addEventListener('click', closeInfo);
-  // A click on the backdrop closes the dialog.
-  info.addEventListener('click', event => { if (event.target === info) closeInfo(); });
-
-  if (inFrame) {
-    // Inside FRAME's overlay: no window to close and no Fullscreen API.
-    closeButton.hidden = true;
-    openTabButton.hidden = false;
-    openTabButton.addEventListener('click', () => window.open(location.href, '_blank'));
-  } else {
-    closeButton.addEventListener('click', () => {
-      window.close();
-      setTimeout(() => {
-        if (!window.closed) showToast(toast, 'Close this tab to return to the museum.');
-      }, 300);
-    });
-    if (document.fullscreenEnabled) {
-      fullscreenButton.hidden = false;
-      fullscreenButton.addEventListener('click', async () => {
-        try {
-          if (document.fullscreenElement) await document.exitFullscreen();
-          else await root.requestFullscreen();
-        } catch {
-          // The browser refused; the reader stays as it is.
-        }
-      });
-      document.addEventListener('fullscreenchange', () => {
-        const on = Boolean(document.fullscreenElement);
-        // A toggle keeps its name; the pressed state (and the icon) show the change.
-        fullscreenButton.setAttribute('aria-pressed', String(on));
-        fullscreenButton.title = on ? 'Exit full screen' : 'Full screen';
-        requestAnimationFrame(() => flip.layout());
-      });
-    }
-  }
 }
 
 // A paper that isn't openly licensed is read at its publisher. The stage shows
@@ -327,19 +247,16 @@ async function showTitlePage(paper) {
   const stage = $('.stage');
   const frame = $('.tp-frame');
   const page = $('.title-page');
-  const closeButton = $('[data-close]');
-  const openTabButton = $('[data-open-tab]');
-  const inFrame = (() => {
-    try { return window.self !== window.top; } catch { return true; }
-  })();
 
   root.classList.add('is-reader', 'is-publisher');
   root.style.setProperty('--accent', ACCENTS[paper.theme] || ACCENTS.harassment);
   document.title = `${typo(paper.shortTitle || paper.title)} · Research Library`;
   $('.paper-title').textContent = typo(paper.shortTitle || paper.title);
   $('.paper-meta').textContent = [paper.authorsShort, paper.year].filter(Boolean).join(' · ');
-  // The page itself carries the details, so the book's controls and Info go.
-  for (const node of [$('.book'), $('.pager'), $('[data-read]'), $('[data-info]')]) node.hidden = true;
+  // The page itself carries the details, so the book and its pager go.
+  for (const node of [$('.book'), $('.pager')]) node.hidden = true;
+  fillLinks(paper, reader);
+  wireBack(reader);
   fillTitlePage(paper, page);
   frame.hidden = false;
 
@@ -350,19 +267,6 @@ async function showTitlePage(paper) {
   document.addEventListener('keydown', event => {
     if (document.activeElement === document.body && scrollKeys.has(event.key) && !event.altKey && !event.ctrlKey && !event.metaKey) stage.focus({preventScroll: true});
   });
-
-  if (inFrame) {
-    closeButton.hidden = true;
-    openTabButton.hidden = false;
-    openTabButton.addEventListener('click', () => window.open(location.href, '_blank'));
-  } else {
-    closeButton.addEventListener('click', () => {
-      window.close();
-      setTimeout(() => {
-        if (!window.closed) showToast($('.toast'), 'Close this tab to return to the museum.');
-      }, 300);
-    });
-  }
 
   const fontsLoaded = await fontsReady(reader);
   reader.hidden = false;
@@ -469,36 +373,40 @@ function syncUrl(index) {
   if (url.href !== location.href) history.replaceState(history.state, '', url);
 }
 
-function fillInfo(paper, info) {
-  const $ = selector => info.querySelector(selector);
-  $('.info-title').textContent = paper.title;
-  $('.info-authors').textContent = (paper.authors || []).join(', ');
-  $('.info-venue').textContent = paper.venue || '';
-  $('.info-year').textContent = paper.year || '';
-  const license = $('.info-license');
-  if (paper.license?.url) {
-    const link = element('a', '', paper.license.name);
-    link.href = paper.license.url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    license.replaceChildren(link);
-  } else {
-    license.textContent = paper.license?.name || '';
-  }
-  for (const row of info.querySelectorAll('[data-row]')) row.hidden = !row.querySelector('dd').textContent.trim();
-  const original = $('[data-original]');
-  if (paper.doi) original.href = 'https://doi.org/' + paper.doi;
-  else original.hidden = true;
-  const download = $('[data-download]');
+// The toolbar's links: download (hosted papers only), the DOI page, and the whole collection.
+function fillLinks(paper, reader) {
+  const download = reader.querySelector('[data-download]');
   if (paper.allowDownload && paper.pdf) {
     download.href = paper.pdf;
     download.download = `${paper.id}.pdf`;
     // Browsers ignore `download` across origins; a new tab then keeps the reader in place.
     download.target = '_blank';
     download.rel = 'noopener';
-  } else {
-    download.hidden = true;
+    download.hidden = false;
   }
+  const doi = reader.querySelector('[data-doi]');
+  if (paper.doi) {
+    doi.href = 'https://doi.org/' + paper.doi;
+    doi.hidden = false;
+  }
+}
+
+// FRAME opens the reader in a new tab, so going back means closing it. Inside
+// FRAME's embedded overlay, or a tab the browser won't close, a note says how.
+function wireBack(reader) {
+  const inFrame = (() => {
+    try { return window.self !== window.top; } catch { return true; }
+  })();
+  reader.querySelector('[data-back]').addEventListener('click', () => {
+    if (inFrame) {
+      showToast(reader.querySelector('.toast'), 'Close this panel to return to FRAME.');
+      return;
+    }
+    window.close();
+    setTimeout(() => {
+      if (!window.closed) showToast(reader.querySelector('.toast'), 'Close this tab to return to FRAME.');
+    }, 300);
+  });
 }
 
 let toastTimer = 0;
