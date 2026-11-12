@@ -28,6 +28,7 @@
 <link rel="stylesheet" href="assets/site.css">
 <link rel="modulepreload" href="assets/flipbook.js">
 <link rel="modulepreload" href="assets/pdf-pages.js">
+<link rel="modulepreload" href="assets/read-mode.js">
 <script type="module" src="assets/app.js"></script>
 </head>
 <body>
@@ -94,9 +95,35 @@
       <button type="button" class="icon-button" data-next aria-label="Next page" title="Next page" aria-disabled="true">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9.5 5.5 16 12l-6.5 6.5"/></svg>
       </button>
+      <button type="button" class="icon-button" data-read aria-haspopup="dialog" aria-label="Zoom in to read" title="Zoom in to read" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5M8 10.5h5M10.5 8v5"/></svg>
+      </button>
     </div>
     <button type="button" class="back-button" data-back>Back to FRAME</button>
   </footer>
+
+  <dialog class="read-mode" aria-label="Read mode">
+    <div class="rm-bar">
+      <p class="rm-position"><span class="rm-position-label">Page</span> <output class="rm-indicator" aria-live="polite" aria-atomic="true"></output></p>
+      <div class="rm-zoom-controls">
+        <button type="button" class="icon-button" data-zoom-out aria-label="Zoom out" title="Zoom out">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg>
+        </button>
+        <output class="rm-zoom" aria-live="polite">Fit</output>
+        <button type="button" class="icon-button" data-zoom-in aria-label="Zoom in" title="Zoom in">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12M12 6v12"/></svg>
+        </button>
+      </div>
+      <div class="rm-actions">
+        <button type="button" class="icon-button" data-read-close aria-label="Close read mode" title="Close read mode">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="rm-scroll" tabindex="0" role="region" aria-label="Pages">
+      <div class="rm-column"></div>
+    </div>
+  </dialog>
 
   <div class="toast" role="status" aria-live="polite"></div>
 </div>

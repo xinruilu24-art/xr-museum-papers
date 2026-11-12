@@ -245,6 +245,59 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 }
 .toast.is-visible { opacity: 1; transform: translate(-50%, 0); }
 
+/* Read mode: every page in one scrolling column, with zoom */
+.read-mode {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+}
+.read-mode[open] { display: flex; flex-direction: column; }
+/* The dialog itself is opaque, so its fade crosses over the book rather than through black. */
+.read-mode::backdrop { background: transparent; }
+.rm-bar {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+.rm-position { grid-column: 1; margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rm-zoom-controls { grid-column: 2; display: flex; align-items: center; gap: 4px; }
+.rm-zoom { min-width: 4.4em; text-align: center; font-size: 15px; font-variant-numeric: tabular-nums; }
+.rm-actions { grid-column: 3; display: flex; justify-content: flex-end; }
+.rm-scroll { position: relative; flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.rm-scroll:focus:not(:focus-visible) { outline: none; }
+/* Inset, so the dialog's edges do not clip it. */
+.rm-scroll:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.rm-column {
+  --gutter: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: max-content;
+  min-width: 100%;
+  padding: 20px var(--gutter) 56px;
+}
+.rm-page { position: relative; flex: none; overflow: hidden; background: var(--paper); }
+/* A page's canvases: one, or tiles when the render exceeds the canvas size limit. */
+.rm-sheet { position: absolute; inset: 0; transition: var(--reveal); }
+.rm-sheet.is-blurred { filter: blur(6px); }
+.rm-canvas { position: absolute; display: block; }
+
 /* PDF.js text layer: transparent text over the page, for selecting, searching and screen readers. */
 .textLayer {
   position: absolute;
@@ -315,11 +368,13 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 /* Compact bars */
 @media (max-width: 860px), (max-height: 480px) {
   .toolbar,
+  .rm-bar,
   .reader-footer { min-height: 52px; gap: 8px; padding-top: max(4px, env(safe-area-inset-top)); padding-bottom: 4px; }
   .reader-footer { padding-top: 4px; padding-bottom: max(4px, env(safe-area-inset-bottom)); }
 }
 @media (max-width: 600px) {
   .toolbar,
+  .rm-bar,
   .reader-footer { gap: 4px; padding-left: max(8px, env(safe-area-inset-left)); padding-right: max(8px, env(safe-area-inset-right)); }
   .icon-button { padding: 0; }
   .pager,
@@ -328,6 +383,7 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
   .paper-title { font-size: 14px; }
   .paper-meta { font-size: 12px; }
   .back-button { padding: 0 14px; }
+  .rm-position-label { display: none; }
 }
 /* Narrow phones: the pager moves to the left so it never meets the button. */
 @media (max-width: 420px) {
@@ -344,10 +400,12 @@ html.is-publisher .stage:focus-visible { outline-offset: -2px; }
 
 @media (prefers-reduced-motion: reduce) {
   .page canvas,
+  .rm-sheet,
   .reveal,
   .card-cover,
   .card-title,
   .toast { transition: none; }
   .page.is-blurred canvas,
+  .rm-sheet.is-blurred,
   .reveal:not(.is-revealed) { filter: none; }
 }

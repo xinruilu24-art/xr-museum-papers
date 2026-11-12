@@ -1,5 +1,6 @@
 import {createFlipbook} from './flipbook.js';
 import {BookRasters, openPdf} from './pdf-pages.js';
+import {createReadMode} from './read-mode.js';
 
 // Black background and white text; buttons and links are purple (Penny's palette).
 const LAVENDER = '#B3A1D7';
@@ -184,6 +185,7 @@ async function showReader(paper) {
   const $ = selector => reader.querySelector(selector);
   const stage = $('.stage');
   const book = $('.book');
+  const readButton = $('[data-read]');
 
   // The paper starts downloading before anything waits.
   preconnect(paper.pdf);
@@ -222,10 +224,41 @@ async function showReader(paper) {
   flip.layout();
   new ResizeObserver(() => flip.layout()).observe(stage);
 
+  // The click that closes read mode can be followed by a second one (a
+  // double-click) on the link underneath, such as View all papers: ignore it.
+  let guardUntil = 0;
+  const guardActions = () => { guardUntil = performance.now() + 500; };
+  $('.actions').addEventListener('click', event => {
+    if (event.detail > 0 && performance.now() < guardUntil) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+
+  let readMode = null;
   pdf.then(source => {
     clearTimeout(loadingTimer);
     rasters.attach(source);
+    readMode = createReadMode({
+      dialog: $('.read-mode'),
+      source,
+      pageCount: source.numPages,
+      fallbackRatio: ratio,
+      standIn: index => rasters.standIn(index),
+      onClose: index => {
+        guardActions();
+        flip.goTo(index);
+      },
+      onOpenChange: open => {
+        rasters.setDeferred(open);
+        if (!open) guardActions();
+      },
+    });
+    rasters.setFallback(index => readMode.canvasFor(index));
     flip.enable(source.numPages);
+    readButton.disabled = false;
+    // Page sizes for read mode, fetched while the reader is idle.
+    setTimeout(() => source.pageSizes().catch(() => {}), 1200);
   }, () => {
     clearTimeout(loadingTimer);
     flip.setStatus('');
@@ -236,6 +269,10 @@ async function showReader(paper) {
     if (paper.doi) link.href = 'https://doi.org/' + paper.doi;
     else link.hidden = true;
     error.hidden = false;
+  });
+
+  readButton.addEventListener('click', () => {
+    if (readMode) void readMode.open(flip.visiblePages()[0]);
   });
 }
 
